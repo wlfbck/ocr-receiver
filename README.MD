@@ -14,7 +14,7 @@ Java 8 or higher has to be installed and be on the Path.
 Starting the program
 -----
 
-If you have downloaded the .jar, simply launch it via `java -jar ocr-receiver.jar`
+If you have downloaded the .jar, simply launch it via `java -jar OCR-Receiver-1.0-SNAPSHOT.jar`
 
 If you have downloaded the whole repo, open it in your favorite IDE, let gradle do its thing and launch Main.
 
