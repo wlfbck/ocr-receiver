@@ -1,10 +1,6 @@
 package org.bvw;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.EvictingQueue;
-import com.google.common.collect.Lists;
-import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.zeromq.SocketType;
@@ -12,32 +8,26 @@ import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
 import java.awt.*;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class Main {
 
-    private static Logger logger = LogManager.getLogger();
-    private Properties properties;
-
-    private ExecutorService executorService = Executors.newCachedThreadPool();
-
+    private static final Logger logger = LogManager.getLogger();
+    private final Properties properties;
     private CommandHandler commandHandler = null;
 
     private EvictingQueue<ChatMessage> chatMessagesHistory = EvictingQueue.create(20);
 
-    private Pattern timestampPattern = Pattern.compile("(\\[\\d{2}:\\d{2}:\\d{2}\\])");
-    private Pattern channelAndUserPattern = Pattern.compile("\\[.*?\\] \\[(.*?)\\]:");
+    private Pattern timestampPattern = null;
+    private Pattern channelAndUserPattern = null;
     private Pattern commandPattern = null;
 
     public static void main(String[] args) throws IOException, AWTException {
@@ -55,6 +45,8 @@ public class Main {
         properties.load(resourceAsStream);
 
         commandPattern = Pattern.compile(properties.getProperty("commandPattern", "pango:(\\w{4}\\d{1,2})"));
+        timestampPattern = Pattern.compile(properties.getProperty("timestampPattern", "(\\[\\d{2}:\\d{2}:\\d{2}\\])"));
+        channelAndUserPattern = Pattern.compile(properties.getProperty("channelAndUserPattern", "\\[.*?\\] \\[(.*?)\\]:"));
         logger.info("loaded properties");
         commandHandler = new CommandHandler(properties);
     }

@@ -9,7 +9,7 @@ import java.util.Properties;
 
 public class CommandHandler {
 
-    private static Logger logger = LogManager.getLogger();
+    private static final Logger logger = LogManager.getLogger();
 
     private Robot robot = new Robot();
 
