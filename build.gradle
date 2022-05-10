@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'java-library-distribution'
 }
 
 java {
@@ -28,4 +29,19 @@ dependencies {
 
 test {
     useJUnitPlatform()
+}
+
+// Task "distZip" added by plugin "java-library-distribution":
+distZip.shouldRunAfter(build)
+
+jar {
+    exclude 'config.properties'
+    manifest {
+        attributes 'Main-Class' : 'org.bvw.Main'
+    }
+
+    from {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
 }
