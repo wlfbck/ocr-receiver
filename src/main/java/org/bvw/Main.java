@@ -12,7 +12,11 @@ import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
 import java.awt.*;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -36,21 +40,27 @@ public class Main {
     private Pattern channelAndUserPattern = Pattern.compile("\\[.*?\\] \\[(.*?)\\]:");
     private Pattern commandPattern = null;
 
-    public static void main(String[] args) throws InterruptedException, IOException, AWTException {
+    public static void main(String[] args) throws IOException, AWTException {
         Main m = new Main();
         m.receiveMessages();
     }
 
     public Main() throws IOException, AWTException {
         properties = new Properties();
-        properties.load(getClass().getClassLoader().getResourceAsStream("config.properties"));
+        InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream("config.properties");
+        if(resourceAsStream == null) {
+            logger.info("Trying to find config.properties in PWD");
+            resourceAsStream = Files.newInputStream(Paths.get("./config.properties"));
+        }
+        properties.load(resourceAsStream);
+
         commandPattern = Pattern.compile(properties.getProperty("commandPattern", "pango:(\\w{4}\\d{1,2})"));
         logger.info("loaded properties");
         commandHandler = new CommandHandler(properties);
     }
 
     public void receiveMessages() {
-        int port = Integer.valueOf(properties.getProperty("port", "1234"));
+        int port = Integer.parseInt(properties.getProperty("port", "1234"));
         logger.info("starting to listen on " + port);
         try (ZContext context = new ZContext()) {
             ZMQ.Socket socket = context.createSocket(SocketType.REP);
@@ -75,7 +85,7 @@ public class Main {
                 .map(this::getCommand)
                 .forEach(this::processCommand);
 
-        individualMessages.forEach(cm -> chatMessagesHistory.add(cm));
+        chatMessagesHistory.addAll(individualMessages);
     }
 
     private boolean hasCommand(ChatMessage message) {
@@ -106,8 +116,8 @@ public class Main {
         String[] split = newLineBeforeTimestamp.split("\n");
         logger.trace("split message into: " + Arrays.asList(split));
         List<ChatMessage> chatMessageList = Arrays.stream(split)
-                .map(s -> makeChatMessage(s))
-                .filter( cm -> cm != null)
+                .map(this::makeChatMessage)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         return chatMessageList;
     }
